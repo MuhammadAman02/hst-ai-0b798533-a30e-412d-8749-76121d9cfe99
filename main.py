@@ -1,35 +1,28 @@
 import os
-import sys
 from dotenv import load_dotenv
+from nicegui import ui, app
+from app.fraud_detection.model import FraudDetectionModel
+from app.fraud_detection.data_processor import DataProcessor
+from app.ui.pages.home import HomePage
+from app.ui.pages.upload import UploadPage
+from app.ui.pages.results import ResultsPage
 
 # Load environment variables
 load_dotenv()
 
-# Add the current directory to the path to ensure imports work correctly
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Initialize fraud detection model and data processor
+model = FraudDetectionModel()
+data_processor = DataProcessor()
 
-# Determine which framework to use based on environment variable
-# Default to FastAPI if not specified
-FRAMEWORK = os.getenv("FRAMEWORK", "fastapi").lower()
+# Create pages
+HomePage()
+UploadPage(data_processor)
+ResultsPage(model, data_processor)
 
-# Import the appropriate application based on the framework
-if FRAMEWORK == "nicegui":
-    try:
-        from nicegui import ui, app as nicegui_app
-        # Setup NiceGUI app here
-        application = nicegui_app
-    except ImportError:
-        print("NiceGUI not installed. Please install with: pip install nicegui")
-        exit(1)
-else:
-    # Default to FastAPI
-    from app import app
-    application = app
-
-# This is used by ASGI servers like Uvicorn
-app = application
-
-if __name__ == "__main__":
-    import uvicorn
-    # Run the application with uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=True)
+# Run the app
+if __name__ in {"__main__", "__mp_main__"}:
+    ui.run(
+        title="Irish Credit Union Fraud Detection",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+    )
